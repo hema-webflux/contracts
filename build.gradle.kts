@@ -4,11 +4,12 @@ plugins {
     signing
 }
 
-val file = providers.gradleProperty("configure.file").get()
-apply(from = "${System.getProperty("user.home")}/.gradle/${file}")
+val configuration = providers.gradleProperty("configure.file").get()
+apply(from = configuration)
 
 group = providers.gradleProperty("package.group").get()
 version = providers.gradleProperty("package.version").get()
+extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
 repositories {
     mavenCentral()
@@ -82,19 +83,13 @@ signing {
     val password: String = project.ext.get("signing.password").toString()
     val secretKey: String = project.ext.get("signing.secretKeyRingFile").toString()
 
+    useGpgCmd()
+
     useInMemoryPgpKeys(keyId, secretKey, password)
 
-    isRequired = gradle.taskGraph.hasTask("publish")
+    isRequired = (project.extra["isReleaseVersion"] as Boolean) && gradle.taskGraph.hasTask("publish")
 
     sign(publishing.publications["mavenJava"])
-}
 
-tasks.javadoc {
-    if (JavaVersion.current().isJava9Compatible) {
-        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-    }
-}
-
-tasks.test {
-    useJUnitPlatform()
+    sign(publishing.publications["maven"])
 }
