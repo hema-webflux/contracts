@@ -4,12 +4,10 @@ plugins {
     signing
 }
 
-val configuration = providers.gradleProperty("configure.file").get()
-apply(from = configuration)
+apply(from = "/home/xgbnl/.gradle/publish.gradle")
 
-group = providers.gradleProperty("package.group").get()
-version = providers.gradleProperty("package.version").get()
-extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
+group = "io.github.hema-webflux"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -25,38 +23,37 @@ java {
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
-            groupId = "${project.group}"
-            artifactId = project.name
-            version = "${project.version}"
-
-            from(components["java"])
+        register<MavenPublication>(project.name) {
+            signing {
+                sign(this@register)
+            }
         }
         create<MavenPublication>("mavenJava") {
+            from(components["java"])
             pom {
                 name = project.name
-                description = providers.gradleProperty("pom.description").get()
-                url = providers.gradleProperty("pom.scm.url").get()
+                description = "Contracts"
+                url = "https://github.com/hema-webflux/contracts"
 
                 licenses {
                     license {
-                        name = providers.gradleProperty("pom.license.name").get()
-                        url = providers.gradleProperty("pom.license.url").get()
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
                     }
                 }
 
                 developers {
                     developer {
-                        id = providers.gradleProperty("pom.developer.id").get()
-                        name = providers.gradleProperty("pom.developer.name").get()
-                        email = providers.gradleProperty("pom.developer.email").get()
+                        id = "xgbnl"
+                        name = "Dai Fei"
+                        email = "745502274@qq.com"
                     }
                 }
 
                 scm {
-                    connection = providers.gradleProperty("pom.scm.connection").get()
-                    developerConnection = providers.gradleProperty("pom.scm.developerConnection").get()
-                    url = providers.gradleProperty("pom.scm.url").get()
+                    connection = "scm:git@github.com:hema-webflux/contracts.git"
+                    developerConnection = "scm:git@github.com:hema-webflux/contracts.git"
+                    url = "https://github.com/hema-webflux/contracts"
                 }
 
             }
@@ -87,9 +84,13 @@ signing {
 
     useInMemoryPgpKeys(keyId, secretKey, password)
 
-    isRequired = (project.extra["isReleaseVersion"] as Boolean) && gradle.taskGraph.hasTask("publish")
-
+    isRequired = gradle.taskGraph.hasTask("publish")
     sign(publishing.publications["mavenJava"])
-
-    sign(publishing.publications["maven"])
 }
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
+}
+
