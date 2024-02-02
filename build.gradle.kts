@@ -4,59 +4,54 @@ plugins {
     signing
 }
 
-val configuration = providers.gradleProperty("configure.file").get()
-apply(from = configuration)
+apply(from = findProperty("SIGNING_CONFIGURE"))
 
-group = providers.gradleProperty("package.group").get()
-version = providers.gradleProperty("package.version").get()
-extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
+group = findProperty("PACKAGE_GROUP") as String
+version = findProperty("PACKAGE_VERSION") as String
 
 repositories {
     mavenCentral()
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-
     withJavadocJar()
     withSourcesJar()
 }
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("mavenJava") {
+
             groupId = "${project.group}"
             artifactId = project.name
             version = "${project.version}"
 
             from(components["java"])
-        }
-        create<MavenPublication>("mavenJava") {
+
             pom {
                 name = project.name
-                description = providers.gradleProperty("pom.description").get()
-                url = providers.gradleProperty("pom.scm.url").get()
+                description = property("POM_DESCRIPTION") as String
+                url = findProperty("POM_SCM_URL") as String
 
                 licenses {
                     license {
-                        name = providers.gradleProperty("pom.license.name").get()
-                        url = providers.gradleProperty("pom.license.url").get()
+                        name = findProperty("POM_LICENSE_NAME") as String
+                        url = findProperty("POM_LICENSE_URL") as String
                     }
                 }
 
                 developers {
                     developer {
-                        id = providers.gradleProperty("pom.developer.id").get()
-                        name = providers.gradleProperty("pom.developer.name").get()
-                        email = providers.gradleProperty("pom.developer.email").get()
+                        id = findProperty("POM_DEVELOPER_ID") as String
+                        name = findProperty("POM_DEVELOPER_NAME") as String
+                        email = findProperty("POM_DEVELOPER_EMAIL") as String
                     }
                 }
 
                 scm {
-                    connection = providers.gradleProperty("pom.scm.connection").get()
-                    developerConnection = providers.gradleProperty("pom.scm.developerConnection").get()
-                    url = providers.gradleProperty("pom.scm.url").get()
+                    connection = findProperty("POM_SCM_CONNECTION") as String
+                    developerConnection = findProperty("POM_SCM_DEVELOPER_CONNECTION") as String
+                    url = findProperty("POM_SCM_URL") as String
                 }
 
             }
@@ -66,8 +61,11 @@ publishing {
     repositories {
         maven {
 
-            val repoProperties: String = if (version.toString().endsWith("SNAPSHOT")) "snapshot" else "release"
-            url = uri(providers.gradleProperty("package.${repoProperties}.repo").get())
+            val isSnapshot = version.toString().endsWith("SNAPSHOT")
+
+            val repositories: String = if (isSnapshot) "SNAPSHOT" else "RELEASE"
+
+            url = uri(findProperty("NEXUS_${repositories}_URL") as String)
 
             credentials {
                 username = project.ext.get("sonaUsername").toString()
@@ -78,18 +76,5 @@ publishing {
 }
 
 signing {
-
-    val keyId: String = project.ext.get("signing.keyId").toString()
-    val password: String = project.ext.get("signing.password").toString()
-    val secretKey: String = project.ext.get("signing.secretKeyRingFile").toString()
-
-    useGpgCmd()
-
-    useInMemoryPgpKeys(keyId, secretKey, password)
-
-    isRequired = (project.extra["isReleaseVersion"] as Boolean) && gradle.taskGraph.hasTask("publish")
-
     sign(publishing.publications["mavenJava"])
-
-    sign(publishing.publications["maven"])
 }
