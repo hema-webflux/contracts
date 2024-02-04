@@ -4,7 +4,9 @@ plugins {
     signing
 }
 
-apply(from = findProperty("SIGNING_CONFIGURE"))
+val userHome: String = System.getProperty("user.home")
+val signingConfigureFile = findProperty("SIGNING_CONFIGURE_FILE")
+apply(from = String.format("%s/.gradle/%s", userHome, signingConfigureFile))
 
 group = findProperty("PACKAGE_GROUP") as String
 version = findProperty("PACKAGE_VERSION") as String
