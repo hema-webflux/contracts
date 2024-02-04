@@ -1,4 +1,4 @@
-package hema.web.contracts.http;
+package hema.web.contracts;
 
 public interface HttpExceptionInterface {
 

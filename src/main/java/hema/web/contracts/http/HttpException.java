@@ -1,12 +1,21 @@
 package hema.web.contracts.http;
 
-public class HttpException extends RuntimeException implements HttpExceptionInterface {
+import hema.web.contracts.HttpExceptionInterface;
+
+public class HttpException extends Exception implements HttpExceptionInterface {
 
     private final int statusCode;
 
     private final String message;
 
+    public HttpException(int code, String message) {
+        super(message);
+        this.statusCode = code;
+        this.message = message;
+    }
+
     public HttpException(int code, String message, Throwable throwable) {
+        super(message, throwable);
         this.statusCode = code;
         this.message = message;
     }
