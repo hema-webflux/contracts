@@ -2,7 +2,7 @@ package hema.web.contracts.http;
 
 import hema.web.contracts.HttpExceptionInterface;
 
-public class HttpException extends Exception implements HttpExceptionInterface {
+public class HttpException extends RuntimeException implements HttpExceptionInterface {
 
     private final int statusCode;
 
